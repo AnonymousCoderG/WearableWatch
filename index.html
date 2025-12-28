@@ -1,0 +1,323 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DigiNurse | Bio-Telemetry Suite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --medical-blue: #020617;
+            --neon-green: #10b981;
+            --neon-blue: #22d3ee;
+            --accent-blue: #1e3a8a;
+            /* Logo Colors from Image */
+            --digi-blue: #0072bc;
+            --nurse-green: #38a58e;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--medical-blue);
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        h1, h2, h3, .font-heading {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        
+        .brand-text {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-style: italic;
+        }
+        
+        .tagline-text {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-style: italic;
+        }
+
+        .medical-panel {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(34, 211, 238, 0.15);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
+        }
+        .body-glow {
+            filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.3));
+        }
+        
+        /* High-precision scanning laser */
+        @keyframes scan-vertical {
+            0% { top: 10%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 90%; opacity: 0; }
+        }
+        .scan-laser {
+            position: absolute;
+            left: 2%;
+            right: 2%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+            box-shadow: 0 0 15px var(--neon-blue);
+            z-index: 40;
+            animation: scan-vertical 6s infinite ease-in-out;
+        }
+
+        @keyframes ring-rotate {
+            0% { transform: rotateX(75deg) rotateZ(0deg); opacity: 0.1; }
+            50% { opacity: 0.4; }
+            100% { transform: rotateX(75deg) rotateZ(360deg); opacity: 0.1; }
+        }
+        .scanning-ring {
+            width: 260px;
+            height: 260px;
+            border: 1px solid var(--neon-blue);
+            border-radius: 50%;
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            margin-left: -130px;
+            animation: ring-rotate 8s infinite linear;
+            box-shadow: 0 0 30px rgba(34, 211, 238, 0.1);
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        canvas {
+            width: 100% !important;
+            height: 60px !important;
+        }
+        
+        @keyframes anatomical-pulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.01); }
+        }
+        .anatomy-core {
+            animation: anatomical-pulse 4s infinite ease-in-out;
+            transform-origin: center;
+        }
+
+        .data-callout {
+            position: absolute;
+            font-size: 8px;
+            font-weight: 700;
+            color: var(--neon-blue);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 50;
+        }
+        .data-callout::before {
+            content: '';
+            width: 20px;
+            height: 1px;
+            background: var(--neon-blue);
+            opacity: 0.5;
+        }
+
+        /* Desktop specific layout */
+        @media (min-width: 1024px) {
+            .viewport-container { height: 600px; }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-6 lg:p-8 selection:bg-cyan-500 selection:text-white">
+    <!-- Header -->
+    <header class="max-w-7xl mx-auto flex justify-between items-end mb-8">
+        <div class="flex flex-col">
+            <h1 class="text-4xl md:text-5xl brand-text tracking-tighter leading-none">
+                <span style="color: var(--digi-blue);">Digi</span><span style="color: var(--nurse-green);">Nurse</span>
+            </h1>
+            <p class="text-lg md:text-xl tagline-text mt-1" style="color: var(--digi-blue);">The care that never blinks</p>
+        </div>
+        <div class="hidden md:block text-right mb-1">
+            <div class="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-1">Signal Status</div>
+            <div class="flex items-center gap-2 text-emerald-400 text-xs font-bold justify-end">
+                <span id="v5-dot" class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span> 
+                <span id="v5-text">ENCRYPTED_LINK_ACTIVE</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left Side: Metric Cards -->
+        <div class="lg:col-span-7 space-y-4">
+            <!-- Heart Rate Card -->
+            <div class="medical-panel p-6 rounded-2xl relative overflow-hidden group border-l-4 border-l-emerald-500">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                        </div>
+                        <span class="text-sm font-extrabold tracking-[0.1em] text-slate-300 uppercase">Cardiac Rhythm (V2)</span>
+                    </div>
+                    <div class="text-right">
+                        <div id="v2-value" class="text-5xl font-bold text-emerald-400 leading-none tabular-nums tracking-tighter">0</div>
+                        <div class="text-[9px] text-slate-500 font-bold uppercase mt-1">BPM Realtime</div>
+                    </div>
+                </div>
+                <canvas id="ecg-canvas" class="mt-2 opacity-80 group-hover:opacity-100 transition-opacity"></canvas>
+            </div>
+
+            <!-- Oxygenation Card -->
+            <div class="medical-panel p-6 rounded-2xl relative overflow-hidden group border-l-4 border-l-cyan-500">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        </div>
+                        <span class="text-sm font-extrabold tracking-[0.1em] text-slate-300 uppercase">Hemoglobin Saturation (V3)</span>
+                    </div>
+                    <div class="text-right">
+                        <div id="v3-value" class="text-5xl font-bold text-cyan-400 leading-none tabular-nums tracking-tighter">0</div>
+                        <div class="text-[9px] text-slate-500 font-bold uppercase mt-1">% SpO2 Content</div>
+                    </div>
+                </div>
+                <canvas id="eda-canvas" class="mt-2 opacity-80 group-hover:opacity-100 transition-opacity"></canvas>
+            </div>
+
+            <!-- Steps/Movement Card -->
+            <div class="medical-panel p-6 rounded-2xl relative overflow-hidden group border-l-4 border-l-slate-600">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-slate-500/10 border border-slate-500/20 flex items-center justify-center text-slate-400">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                        </div>
+                        <span class="text-sm font-extrabold tracking-[0.1em] text-slate-300 uppercase">Kinetic Activity (V1)</span>
+                    </div>
+                    <div class="text-right">
+                        <div id="v1-value" class="text-5xl font-bold text-slate-200 leading-none tabular-nums tracking-tighter">0</div>
+                        <div class="text-[9px] text-slate-500 font-bold uppercase mt-1">Aggregated Steps</div>
+                    </div>
+                </div>
+                <div id="hr-graph" class="h-[60px] flex items-end gap-1 px-1">
+                    <!-- Dynamic Histograms -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Biometric Viewport -->
+        <div class="lg:col-span-5 medical-panel rounded-2xl flex flex-col p-6 relative overflow-hidden shadow-2xl viewport-container">
+            <div class="flex justify-between items-center mb-6 relative z-50">
+                <div class="flex flex-col">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em]">Precision Viewport</span>
+                    <span class="text-[8px] text-cyan-500 font-mono">SCAN_RES: 1240.4pp/cm</span>
+                </div>
+                <div class="px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded text-[9px] text-cyan-400 font-black tracking-widest">
+                    ANATOMICAL_MAP_V2
+                </div>
+            </div>
+
+            <div class="flex-grow flex items-center justify-center relative py-12">
+                <!-- Scanning Laser Line -->
+                <div class="scan-laser"></div>
+                
+                <!-- Ground Ring -->
+                <div id="scan-ring" class="scanning-ring"></div>
+
+                <!-- High Fidelity Anatomy/Skeleton SVG -->
+                <svg viewBox="0 0 200 500" class="h-full max-h-[520px] body-glow anatomy-core" style="color: var(--neon-blue);">
+                    <g fill="none" stroke="currentColor" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- Head/Skull -->
+                        <path d="M100,25 c-12,0-20,10-20,22 s8,20,20,20 s20-8,20-20 S112,25,100,25z" fill="currentColor" fill-opacity="0.05" />
+                        <path d="M90,62 l20,0 l-5,10 l-10,0 z" fill="currentColor" fill-opacity="0.2" /> <!-- Jaw -->
+                        
+                        <!-- Spine -->
+                        <path d="M100,67 v200" stroke-width="2.5" stroke-dasharray="2,4" opacity="0.4" />
+                        
+                        <!-- Ribcage -->
+                        <g opacity="0.6">
+                            <path d="M100,85 c-20,0-35,10-35,25 v10 c0,15,15,25,35,25 s35-10,35-25 v-10 C135,95,120,85,100,85z" />
+                            <path d="M70,100 h60" opacity="0.3" />
+                            <path d="M67,115 h66" opacity="0.3" />
+                            <path d="M68,130 h64" opacity="0.3" />
+                        </g>
+
+                        <!-- Pelvis -->
+                        <path d="M75,250 c5,-10,45,-10,50,0 l10,25 h-70 z" fill="currentColor" fill-opacity="0.1" />
+
+                        <!-- Limbs (Bones Structure) -->
+                        <!-- Arms -->
+                        <path d="M65,95 l-25,30 l-10,80" /> <!-- Left Arm -->
+                        <path d="M135,95 l25,30 l10,80" /> <!-- Right Arm -->
+                        <!-- Legs -->
+                        <path d="M85,275 l-5,90 l-10,100" stroke-width="1.2" /> <!-- Left Leg -->
+                        <path d="M115,275 l5,90 l10,100" stroke-width="1.2" /> <!-- Right Leg -->
+
+                        <!-- Internal Organ Markers (Heart/Lungs) -->
+                        <circle cx="92" cy="115" r="6" fill="#ef4444" fill-opacity="0.4" class="animate-pulse" /> <!-- Heart -->
+                    </g>
+                    
+                    <!-- Reference Grid Overlay -->
+                    <g opacity="0.1">
+                        <line x1="0" y1="100" x2="200" y2="100" stroke="currentColor" stroke-width="0.2" />
+                        <line x1="0" y1="250" x2="200" y2="250" stroke="currentColor" stroke-width="0.2" />
+                        <line x1="0" y1="400" x2="200" y2="400" stroke="currentColor" stroke-width="0.2" />
+                    </g>
+                </svg>
+
+                <!-- Dynamic Precise Callouts -->
+                <div class="data-callout left-6 bottom-[100px]">
+                    <span class="text-slate-500">KINETIC_SYNC: OK</span>
+                </div>
+
+                <!-- Vertical Signal Bars -->
+                <div id="status-sidebar" class="absolute right-4 bottom-12 flex flex-col gap-1.5 z-40">
+                    <div class="w-6 h-1 bg-slate-800 rounded-sm"></div>
+                    <div class="w-6 h-1 bg-slate-800 rounded-sm"></div>
+                    <div class="w-6 h-1 bg-slate-800 rounded-sm"></div>
+                    <div class="w-6 h-1 bg-slate-800 rounded-sm"></div>
+                    <div class="w-6 h-1 bg-slate-800 rounded-sm"></div>
+                    <div class="w-6 h-1 bg-slate-800 rounded-sm"></div>
+                    <div class="w-6 h-1 bg-slate-800 rounded-sm"></div>
+                    <div class="w-6 h-1 bg-slate-800 rounded-sm"></div>
+                    <div class="w-6 h-1 bg-slate-800 rounded-sm"></div>
+                    <div class="w-6 h-1 bg-slate-800 rounded-sm"></div>
+                </div>
+            </div>
+
+            <!-- Precision Stats Footer -->
+            <div class="grid grid-cols-4 gap-4 border-t border-slate-800/60 mt-4 pt-6 pb-2">
+                <div class="text-center group">
+                    <div class="text-emerald-400 font-bold text-xl leading-none">32</div>
+                    <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mt-2">Pat_Age</div>
+                </div>
+                <div class="text-center group">
+                    <div class="text-slate-100 font-bold text-xl leading-none">189<span class="text-[10px] text-slate-500 ml-0.5 uppercase">cm</span></div>
+                    <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mt-2">Stature</div>
+                </div>
+                <div class="text-center group">
+                    <div id="v4-value" class="text-emerald-400 font-bold text-xl leading-none">0.0</div>
+                    <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mt-2">Thermal</div>
+                </div>
+                <div class="text-center group">
+                    <div class="text-emerald-400 font-bold text-xl leading-none">22.2</div>
+                    <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mt-2">B.M.I</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="max-w-7xl mx-auto mt-12 mb-8 flex flex-col md:flex-row justify-between items-center text-[10px] text-slate-600 font-bold tracking-[0.4em] gap-6 border-t border-slate-800/40 pt-8">
+        <div class="flex items-center gap-3">
+            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+            NETWORK: <span class="text-slate-400">SECURE_DYN_HOST</span>
+        </div>
+        <div id="last-updated" class="text-emerald-500/80 bg-emerald-500/5 px-6 py-2 rounded-full border border-emerald-500/10 backdrop-blur-sm">
+            LAST_TELEMETRY_SYNC: --:--:--
+        </div>
+        <div class="flex items-center gap-2">
+             STATION_ID: <span class="text-slate-400 font-mono">DX-ANATOMY-01</span>
+        </div>
+    </footer>
+
+    <script src="index.js"></script>
+</body>
+</html>
