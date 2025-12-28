@@ -239,7 +239,8 @@
 
 
 
-//updated with connectivity  and vitals
+//updated with connectivity  and vitals & temp 
+
 
 const BLYNK_AUTH_TOKEN = 'uXKhBrB_1_wQO6s-w0QD5F-fgN1qM8TX';
 const BLYNK_BASE_URL = 'https://blynk.cloud/external/api';
@@ -248,7 +249,7 @@ const V_PINS = {
     steps: 'V1',
     heartRate: 'V2',
     spo2: 'V3',
-    temp: 'V4', // Thermal still exists in Blynk but we're prioritizing Weight local-only per request
+    temp: 'V4', 
     scanStatus: 'V5' 
 };
 
@@ -267,6 +268,7 @@ let appState = {
 const v1El = document.getElementById('v1-value');
 const v2El = document.getElementById('v2-value');
 const v3El = document.getElementById('v3-value');
+const v4El = document.getElementById('v4-value');
 const v5Text = document.getElementById('v5-text');
 const v5Dot = document.getElementById('v5-dot');
 const lastUpdatedEl = document.getElementById('last-updated');
@@ -462,6 +464,7 @@ function updateUI() {
     if(v1El) v1El.textContent = isConnected ? appState.metrics.steps.toLocaleString() : "---";
     if(v2El) v2El.textContent = isConnected ? appState.metrics.heartRate : "--";
     if(v3El) v3El.textContent = isConnected ? appState.metrics.spo2 : "--";
+    if(v4El) v4El.textContent = isConnected ? Number(appState.metrics.temp).toFixed(1) : "0.0";
 
     if(v5Text) {
         v5Text.textContent = isConnected ? "DEVICE_CONNECTED" : "DEVICE_OFFLINE";
