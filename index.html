@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,24 +26,23 @@
             font-family: 'Space Grotesk', sans-serif;
         }
         
-        .brand-text {
-            font-family: 'Inter', sans-serif;
-            font-weight: 900;
-            font-style: italic;
-        }
-        
-        .tagline-text {
-            font-family: 'Inter', sans-serif;
-            font-weight: 700;
-            font-style: italic;
-        }
-
         .medical-panel {
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid rgba(34, 211, 238, 0.15);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
             backdrop-filter: blur(12px);
+            transition: all 0.5s ease;
         }
+        /* More aggressive standby mode */
+        .system-standby .medical-panel {
+            opacity: 0.3;
+            filter: grayscale(1) blur(1px);
+            pointer-events: none;
+        }
+        .system-standby .viewport-container {
+            opacity: 0.15;
+        }
+        
         .body-glow {
             filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.3));
         }
@@ -92,15 +90,6 @@
             height: 60px !important;
         }
         
-        @keyframes anatomical-pulse {
-            0%, 100% { opacity: 0.4; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(1.01); }
-        }
-        .anatomy-core {
-            animation: anatomical-pulse 4s infinite ease-in-out;
-            transform-origin: center;
-        }
-
         .footer-input {
             background: transparent;
             border: none;
@@ -114,41 +103,41 @@
             outline: none;
             padding: 4px 0;
             transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .footer-input:hover {
-            border-bottom-color: rgba(34, 211, 238, 0.4);
-        }
-        .footer-input:focus {
-            cursor: text;
-            border-bottom-color: var(--neon-blue);
-            background: rgba(34, 211, 238, 0.1);
         }
         
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        @media (min-width: 1024px) { .viewport-container { min-height: 680px; } }
+
+        .periodic-table td, .periodic-table th {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .active-row {
+            background: rgba(34, 211, 238, 0.05);
+            box-shadow: inset 4px 0 0 var(--neon-blue);
         }
 
-        @media (min-width: 1024px) {
-            .viewport-container { min-height: 680px; }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 0.4; }
         }
     </style>
 </head>
-<body class="p-4 md:p-6 lg:p-8 selection:bg-cyan-500 selection:text-white">
+<body id="main-body" class="p-4 md:p-6 lg:p-8 selection:bg-cyan-500 selection:text-white system-standby">
     <header class="max-w-7xl mx-auto flex justify-between items-end mb-8">
         <div class="flex flex-col">
-            <h1 class="text-4xl md:text-5xl brand-text tracking-tighter leading-none">
+            <h1 class="text-4xl md:text-5xl font-black italic tracking-tighter leading-none">
                 <span style="color: var(--digi-blue);">Digi</span><span style="color: var(--nurse-green);">Nurse</span>
             </h1>
-            <p class="text-lg md:text-xl tagline-text mt-1" style="color: var(--digi-blue);">The care that never blinks</p>
+            <p class="text-lg md:text-xl font-bold italic mt-1" style="color: var(--digi-blue);">The care that never blinks</p>
         </div>
         <div class="hidden md:block text-right mb-1">
-            <div class="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-1">Signal Status</div>
-            <div class="flex items-center gap-2 text-emerald-400 text-xs font-bold justify-end">
-                <span id="v5-dot" class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span> 
-                <span id="v5-text">ENCRYPTED_LINK_ACTIVE</span>
+            <div class="text-[10px] text-slate-500 font-bold tracking-widest uppercase mb-1">System Master (V1)</div>
+            <div class="flex items-center gap-2 text-xs font-bold justify-end">
+                <span id="v1-dot" class="w-2 h-2 bg-slate-600 rounded-full"></span> 
+                <span id="v1-text" class="text-slate-500">SYNCING_INITIAL_STATE...</span>
             </div>
         </div>
     </header>
@@ -156,141 +145,201 @@
     <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         <!-- Left Side: Metric Cards -->
         <div class="lg:col-span-7 space-y-4 h-full">
-            <!-- Heart Rate Card -->
-            <div class="medical-panel p-6 rounded-2xl relative overflow-hidden group border-l-4 border-l-emerald-500">
+            <!-- Heart Rate (V2) -->
+            <div class="medical-panel p-6 rounded-2xl relative border-l-4 border-l-red-500">
                 <div class="flex justify-between items-start mb-4">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
-                             <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                        </div>
-                        <span class="text-sm font-extrabold tracking-[0.1em] text-slate-300 uppercase">Cardiac Rhythm (V2)</span>
-                    </div>
+                    <span class="text-sm font-extrabold tracking-widest text-slate-300 uppercase">Cardiac Rhythm (V2)</span>
                     <div class="text-right">
-                        <div id="v2-value" class="text-5xl font-bold text-emerald-400 leading-none tabular-nums tracking-tighter">0</div>
+                        <div id="v2-value" class="text-5xl font-bold text-red-400 tabular-nums">--</div>
                         <div class="text-[9px] text-slate-500 font-bold uppercase mt-1">BPM Realtime</div>
                     </div>
                 </div>
-                <canvas id="ecg-canvas" class="mt-2 opacity-80 group-hover:opacity-100 transition-opacity"></canvas>
+                <canvas id="ecg-canvas"></canvas>
             </div>
 
-            <!-- Oxygenation Card -->
-            <div class="medical-panel p-6 rounded-2xl relative overflow-hidden group border-l-4 border-l-cyan-500">
+            <!-- SpO2 (V3) -->
+            <div class="medical-panel p-6 rounded-2xl relative border-l-4 border-l-blue-500">
                 <div class="flex justify-between items-start mb-4">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-                             <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                        </div>
-                        <span class="text-sm font-extrabold tracking-[0.1em] text-slate-300 uppercase">Hemoglobin Saturation (V3)</span>
-                    </div>
+                    <span class="text-sm font-extrabold tracking-widest text-slate-300 uppercase">Oxygen Saturation (V3)</span>
                     <div class="text-right">
-                        <div id="v3-value" class="text-5xl font-bold text-cyan-400 leading-none tabular-nums tracking-tighter">0</div>
+                        <div id="v3-value" class="text-5xl font-bold text-blue-400 tabular-nums">--</div>
                         <div class="text-[9px] text-slate-500 font-bold uppercase mt-1">% SpO2 Content</div>
                     </div>
                 </div>
-                <canvas id="eda-canvas" class="mt-2 opacity-80 group-hover:opacity-100 transition-opacity"></canvas>
+                <canvas id="eda-canvas"></canvas>
             </div>
 
-            <!-- Steps/Movement Card -->
-            <div class="medical-panel p-6 rounded-2xl relative overflow-hidden group border-l-4 border-l-slate-600">
+            <!-- Sleep Chart (V7) -->
+            <div class="medical-panel p-6 rounded-2xl relative border-l-4 border-l-indigo-600">
                 <div class="flex justify-between items-start mb-4">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-slate-500/10 border border-slate-500/20 flex items-center justify-center text-slate-400">
-                             <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                        </div>
-                        <span class="text-sm font-extrabold tracking-[0.1em] text-slate-300 uppercase">Kinetic Activity (V1)</span>
-                    </div>
+                    <span class="text-sm font-extrabold tracking-widest text-slate-300 uppercase">Rest Cycle Analysis (V7)</span>
                     <div class="text-right">
-                        <div id="v1-value" class="text-5xl font-bold text-slate-200 leading-none tabular-nums tracking-tighter">0</div>
-                        <div class="text-[9px] text-slate-500 font-bold uppercase mt-1">Aggregated Steps</div>
+                        <div id="v7-text" class="text-5xl font-bold text-indigo-400 tabular-nums">---</div>
+                        <div class="text-[9px] text-slate-500 font-bold uppercase mt-1">Current State</div>
                     </div>
                 </div>
-                <div id="hr-graph" class="h-[60px] flex items-end gap-1 px-1"></div>
+                <div id="sleep-graph" class="h-[60px] flex items-end gap-1 px-1"></div>
             </div>
 
-            <!-- Temperature Card -->
-            <div class="medical-panel p-6 rounded-2xl relative overflow-hidden group border-l-4 border-l-amber-500">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
-                             <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+            <!-- Temperature (V4) & Sleep Quality (V8) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="medical-panel p-6 rounded-2xl relative border-l-4 border-l-amber-500">
+                    <div class="flex justify-between items-start">
+                        <span class="text-sm font-extrabold tracking-widest text-slate-300 uppercase">Body Temp (V4)</span>
+                        <div class="text-right">
+                            <div id="v4-value" class="text-4xl font-bold text-amber-400 tabular-nums">0.0</div>
+                            <div class="text-[9px] text-slate-500 font-bold uppercase mt-1">°C Internal</div>
                         </div>
-                        <span class="text-sm font-extrabold tracking-[0.1em] text-slate-300 uppercase">Core Temperature (V4)</span>
-                    </div>
-                    <div class="text-right">
-                        <div id="v4-value" class="text-5xl font-bold text-amber-400 leading-none tabular-nums tracking-tighter">0.0</div>
-                        <div class="text-[9px] text-slate-500 font-bold uppercase mt-1">°C Internal</div>
                     </div>
                 </div>
-                <div class="h-[40px] flex items-center justify-center opacity-20 pointer-events-none">
-                    <div class="w-full h-px bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+                <div class="medical-panel p-6 rounded-2xl relative border-l-4 border-l-emerald-500">
+                    <div class="flex justify-between items-start">
+                        <span class="text-sm font-extrabold tracking-widest text-slate-300 uppercase">Sleep Recovery (V8)</span>
+                        <div class="text-right">
+                            <div id="v8-value" class="text-4xl font-bold text-emerald-400 tabular-nums">--</div>
+                            <div class="text-[9px] text-slate-500 font-bold uppercase mt-1">% Quality</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Right Side: Biometric Viewport -->
         <div class="lg:col-span-5 medical-panel rounded-2xl flex flex-col p-6 relative overflow-visible shadow-2xl viewport-container">
-            <div class="flex-none flex justify-between items-center mb-6 relative z-50">
+            <div class="flex-none flex justify-between items-start mb-6 relative z-50">
                 <div class="flex flex-col">
                     <span class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em]">Precision Viewport</span>
-                    <span class="text-[8px] text-cyan-500 font-mono">SCAN_RES: 1240.4pp/cm</span>
+                    <div class="mt-2">
+                        <div class="text-[8px] text-slate-600 font-black uppercase tracking-widest mb-1">Patient Status (V6)</div>
+                        <span id="v6-status" class="inline-block px-3 py-1 bg-slate-800 rounded border border-slate-700 text-[11px] text-slate-400 font-black tracking-widest uppercase shadow-lg transition-all duration-300">
+                            STILL
+                        </span>
+                    </div>
                 </div>
-                <div class="px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded text-[9px] text-cyan-400 font-black tracking-widest uppercase">
-                    Anatomical_Map
+                <div class="flex flex-col items-end gap-2">
+                    <button id="download-btn-trigger" class="px-4 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded text-[9px] text-cyan-400 font-black tracking-widest uppercase hover:bg-cyan-500/20 transition-all cursor-pointer">
+                        DOWNLOAD_LOG
+                    </button>
+                    <span id="log-counter" class="text-[8px] text-slate-500 font-mono">SNAPSHOTS: 0</span>
                 </div>
             </div>
 
             <div class="flex-grow flex items-center justify-center relative min-h-[350px]">
                 <div class="scan-laser"></div>
                 <div id="scan-ring" class="scanning-ring"></div>
-                <svg viewBox="0 0 200 500" class="h-full w-auto max-h-[480px] body-glow anatomy-core" style="color: var(--neon-blue);">
-                    <g fill="none" stroke="currentColor" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 200 500" class="h-full w-auto max-h-[480px] body-glow" style="color: var(--neon-blue);">
+                    <g fill="none" stroke="currentColor" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.6">
                         <path d="M100,25 c-12,0-20,10-20,22 s8,20,20,20 s20-8,20-20 S112,25,100,25z" fill="currentColor" fill-opacity="0.05" />
-                        <path d="M90,62 l20,0 l-5,10 l-10,0 z" fill="currentColor" fill-opacity="0.2" />
                         <path d="M100,67 v200" stroke-width="2.5" stroke-dasharray="2,4" opacity="0.4" />
-                        <g opacity="0.6">
-                            <path d="M100,85 c-20,0-35,10-35,25 v10 c0,15,15,25,35,25 s35-10,35-25 v-10 C135,95,120,85,100,85z" />
-                            <path d="M70,100 h60" opacity="0.3" /><path d="M67,115 h66" opacity="0.3" /><path d="M68,130 h64" opacity="0.3" />
-                        </g>
                         <path d="M75,250 c5,-10,45,-10,50,0 l10,25 h-70 z" fill="currentColor" fill-opacity="0.1" />
                         <path d="M65,95 l-25,30 l-10,80" /><path d="M135,95 l25,30 l10,80" />
-                        <path d="M85,275 l-5,90 l-10,100" stroke-width="1.2" /><path d="M115,275 l5,90 l10,100" stroke-width="1.2" />
-                        <circle cx="92" cy="115" r="6" fill="#ef4444" fill-opacity="0.4" class="animate-pulse" />
+                        <path d="M85,275 l-5,90 l-10,100" /><path d="M115,275 l5,90 l10,100" />
+                        <circle id="hr-pulse-dot" cx="92" cy="115" r="6" fill="#ef4444" fill-opacity="0.4" />
                     </g>
                 </svg>
             </div>
 
-            <!-- Precision Stats Footer -->
             <div class="flex-none grid grid-cols-4 gap-4 border-t border-slate-800/60 mt-4 pt-6 pb-2 z-50">
-                <div class="text-center group">
-                    <input type="number" id="local-age" class="footer-input text-emerald-400" value="32" placeholder="--">
+                <div class="text-center">
+                    <input type="number" id="local-age" class="footer-input text-emerald-400" value="32">
                     <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mt-2">Age</div>
                 </div>
-                <div class="text-center group">
-                    <input type="number" id="local-height" class="footer-input text-slate-100" value="189" placeholder="--">
+                <div class="text-center">
+                    <input type="number" id="local-height" class="footer-input text-slate-100" value="189">
                     <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mt-2">Height(cm)</div>
                 </div>
-                <div class="text-center group">
-                    <input type="number" id="local-weight" class="footer-input text-emerald-400" value="85.5" placeholder="--">
+                <div class="text-center">
+                    <input type="number" id="local-weight" class="footer-input text-emerald-400" value="85.5">
                     <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mt-2">Weight(kg)</div>
                 </div>
-                <div class="text-center group">
-                    <div id="local-bmi" class="text-emerald-400 font-bold text-xl leading-none py-1 border-b border-transparent">23.9</div>
+                <div class="text-center">
+                    <div id="local-bmi" class="text-emerald-400 font-bold text-xl leading-none py-1">23.9</div>
                     <div class="text-[8px] text-slate-500 uppercase font-black tracking-widest mt-2">B.M.I</div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Periodic Telemetry Table -->
+        <div class="lg:col-span-12 medical-panel rounded-2xl p-6 overflow-hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-lg font-bold tracking-widest uppercase text-slate-200">Periodic Performance Matrix</h2>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">120s Circular Log | Intervals: 2, 4, 6, 8, 10 Minutes</p>
+                </div>
+                <div id="next-log-countdown" class="text-cyan-400 text-xs font-mono font-bold tracking-tighter">
+                    NEXT_INTERVAL_LOG: 00:00
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full periodic-table text-xs font-bold uppercase tracking-wider">
+                    <thead>
+                        <tr class="text-slate-500 text-[9px] border-b border-slate-800">
+                            <th>INTERVAL</th>
+                            <th>HEART RATE</th>
+                            <th>SPO2 (%)</th>
+                            <th>BODY TEMP</th>
+                            <th>SLEEP QUALITY</th>
+                            <th>SYNC_TIMESTAMP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="periodic-tbody">
+                        <tr id="row-0" class="text-slate-400">
+                            <td class="text-cyan-400">02 Mins</td>
+                            <td class="hr-val">--</td>
+                            <td class="spo2-val">--</td>
+                            <td class="temp-val">--</td>
+                            <td class="sq-val">--</td>
+                            <td class="time-val font-mono text-[10px]">WAITING...</td>
+                        </tr>
+                        <tr id="row-1" class="text-slate-400">
+                            <td class="text-cyan-400">04 Mins</td>
+                            <td class="hr-val">--</td>
+                            <td class="spo2-val">--</td>
+                            <td class="temp-val">--</td>
+                            <td class="sq-val">--</td>
+                            <td class="time-val font-mono text-[10px]">WAITING...</td>
+                        </tr>
+                        <tr id="row-2" class="text-slate-400">
+                            <td class="text-cyan-400">06 Mins</td>
+                            <td class="hr-val">--</td>
+                            <td class="spo2-val">--</td>
+                            <td class="temp-val">--</td>
+                            <td class="sq-val">--</td>
+                            <td class="time-val font-mono text-[10px]">WAITING...</td>
+                        </tr>
+                        <tr id="row-3" class="text-slate-400">
+                            <td class="text-cyan-400">08 Mins</td>
+                            <td class="hr-val">--</td>
+                            <td class="spo2-val">--</td>
+                            <td class="temp-val">--</td>
+                            <td class="sq-val">--</td>
+                            <td class="time-val font-mono text-[10px]">WAITING...</td>
+                        </tr>
+                        <tr id="row-4" class="text-slate-400">
+                            <td class="text-cyan-400">10 Mins</td>
+                            <td class="hr-val">--</td>
+                            <td class="spo2-val">--</td>
+                            <td class="temp-val">--</td>
+                            <td class="sq-val">--</td>
+                            <td class="time-val font-mono text-[10px]">WAITING...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </main>
 
     <footer class="max-w-7xl mx-auto mt-12 mb-8 flex flex-col md:flex-row justify-between items-center text-[10px] text-slate-600 font-bold tracking-[0.4em] gap-6 border-t border-slate-800/40 pt-8">
         <div class="flex items-center gap-3">
-            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
-            NETWORK: <span class="text-slate-400">BLYNK_CLOUD_IOT</span>
+            <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+            NETWORK: <span class="text-slate-400">BLYNK_IOT_CLOUD</span>
         </div>
-        <div id="last-updated" class="text-emerald-500/80 bg-emerald-500/5 px-6 py-2 rounded-full border border-emerald-500/10 backdrop-blur-sm">
-            LAST_TELEMETRY_SYNC: --:--:--
+        <div id="last-updated" class="text-emerald-500/80 bg-emerald-500/5 px-6 py-2 rounded-full border border-emerald-500/10">
+            SYNC_IN_PROGRESS...
         </div>
         <div class="flex items-center gap-2">
-             MADE BY: <span class="text-slate-400 font-mono">LAKSHYA_CHELAWAT</span>
+            CREATED BY : <span class="text-slate-400 font-mono">LAKSHYA CHELAWAT</span>
         </div>
     </footer>
 
